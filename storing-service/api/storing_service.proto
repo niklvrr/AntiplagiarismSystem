@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package storing.v1;
+
+option go_package = "pkg/api";
+
+service StoringService {
+  rpc UploadTask(UploadTaskRequest) returns (UploadTaskResponse);
+
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+}
+
+// ==== UPLOAD TASK ====
+
+message UploadTaskRequest {
+  string filename = 1;
+  string uploaded_by = 2;
+}
+
+message UploadTaskResponse {
+  string file_id = 1;
+  string upload_url = 2;
+}
+
+// ==== GET TASK ====
+
+message GetTaskRequest {
+  string file_id = 1;
+}
+
+message GetTaskResponse {
+  string file_id = 1;
+  string filename = 2;
+  string url = 3;
+  string uploaded_id = 4;
+  string uploaded_at = 5;
+}
