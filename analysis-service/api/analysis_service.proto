@@ -8,6 +8,8 @@ service AnalysisService {
   rpc AnalyseTask(AnalyzeTaskRequest) returns (AnalyseTaskResponse);
 
   rpc GetReport(GetReportRequest) returns (GetReportResponse);
+
+  rpc GenerateWordCloud(GenerateWordCloudRequest) returns (GenerateWordCloudResponse);
 }
 
 // ==== ANALYSE TASK ====
@@ -31,4 +33,14 @@ message GetReportResponse {
   string task_id = 1;
   bool is_plagiarism = 4;
   float plagiarism_percentage = 5;
+}
+
+// ==== GENERATE WORD CLOUD ====
+
+message GenerateWordCloudRequest {
+  bytes file_content = 1;
+}
+
+message GenerateWordCloudResponse {
+  string image_url = 1;
 }

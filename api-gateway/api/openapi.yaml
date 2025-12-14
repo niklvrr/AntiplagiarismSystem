@@ -1,0 +1,366 @@
+openapi: 3.0.3
+info:
+  title: Antiplagiarism System API
+  description: API Gateway for Antiplagiarism System microservices
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://api-gateway:8080
+    description: Docker container server
+
+paths:
+  /api/v1/task:
+    post:
+      summary: Upload a new task
+      description: Creates a new task and returns an upload URL for the file
+      operationId: uploadTask
+      tags:
+        - File storing service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadTaskRequest'
+            example:
+              filename: "document.pdf"
+              uploaded_by: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadTaskResponse'
+              example:
+                file_id: "550e8400-e29b-41d4-a716-446655440000"
+                upload_url: "http://minio:9000/tasks/550e8400-e29b-41d4-a716-446655440000.pdf?X-Amz-Algorithm=..."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/task/{task_id}:
+    get:
+      summary: Get task information
+      description: Retrieves information about a specific task including download URL
+      operationId: getTask
+      tags:
+        - File storing service
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Task information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTaskResponse'
+              example:
+                file_id: "550e8400-e29b-41d4-a716-446655440000"
+                filename: "document.pdf"
+                url: "http://minio:9000/tasks/550e8400-e29b-41d4-a716-446655440000.pdf?X-Amz-Algorithm=..."
+                uploaded_by: "550e8400-e29b-41d4-a716-446655440000"
+                uploaded_at: "2024-01-15T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/analyse:
+    post:
+      summary: Analyse a task for plagiarism
+      description: Initiates plagiarism analysis for a specific task
+      operationId: analyseTask
+      tags:
+        - File analysis service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeTaskRequest'
+            example:
+              task_id: "550e8400-e29b-41d4-a716-446655440000"
+              filename: "document.pdf"
+      responses:
+        '200':
+          description: Analysis initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeTaskResponse'
+              example:
+                status: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/report/{task_id}:
+    get:
+      summary: Get plagiarism report
+      description: Retrieves the plagiarism analysis report for a specific task
+      operationId: getReport
+      tags:
+        - File analysis service
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetReportResponse'
+              example:
+                task_id: "550e8400-e29b-41d4-a716-446655440000"
+                is_plagiarism: false
+                plagiarism_percentage: 15.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/wordcloud/{task_id}:
+    get:
+      summary: Get word cloud visualization
+      description: Generates and returns a word cloud image URL for the specified task file
+      operationId: getWordCloud
+      tags:
+        - File analysis service
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Word cloud generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WordCloudResponse'
+              example:
+                task_id: "550e8400-e29b-41d4-a716-446655440000"
+                image_url: "https://quickchart.io/wordcloud?c=..."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  schemas:
+    UploadTaskRequest:
+      type: object
+      required:
+        - filename
+        - uploaded_by
+      properties:
+        filename:
+          type: string
+          description: Name of the file to upload
+          example: "document.pdf"
+        uploaded_by:
+          type: string
+          format: uuid
+          description: UUID of the user uploading the file
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    UploadTaskResponse:
+      type: object
+      properties:
+        file_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the created task
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        upload_url:
+          type: string
+          format: uri
+          description: Presigned URL for uploading the file to MinIO
+          example: "http://minio:9000/tasks/550e8400-e29b-41d4-a716-446655440000.pdf?X-Amz-Algorithm=..."
+
+    GetTaskResponse:
+      type: object
+      properties:
+        file_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the task
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        filename:
+          type: string
+          description: Original filename
+          example: "document.pdf"
+        url:
+          type: string
+          format: uri
+          description: Presigned URL for downloading the file
+          example: "http://minio:9000/tasks/550e8400-e29b-41d4-a716-446655440000.pdf?X-Amz-Algorithm=..."
+        uploaded_by:
+          type: string
+          format: uuid
+          description: UUID of the user who uploaded the file
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        uploaded_at:
+          type: string
+          format: date-time
+          description: Timestamp when the task was created
+          example: "2024-01-15T10:30:00Z"
+
+    AnalyzeTaskRequest:
+      type: object
+      required:
+        - task_id
+        - filename
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the task to analyze
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        filename:
+          type: string
+          description: Name of the file to analyze
+          example: "document.pdf"
+
+    AnalyzeTaskResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          description: Whether the analysis was initiated successfully
+          example: true
+
+    GetReportResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the task
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        is_plagiarism:
+          type: boolean
+          description: Whether plagiarism was detected (threshold > 50%)
+          example: false
+        plagiarism_percentage:
+          type: number
+          format: float
+          description: Percentage of similarity with other documents
+          example: 15.5
+          minimum: 0
+          maximum: 100
+
+    WordCloudResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the task
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        image_url:
+          type: string
+          format: uri
+          description: URL to the generated word cloud image
+          example: "https://quickchart.io/wordcloud?c=..."
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_ARGUMENT"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid request body"
+            code: "INVALID_ARGUMENT"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Task not found"
+            code: "NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal server error"
+            code: "INTERNAL"
+
+    ServiceUnavailable:
+      description: Service temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Service unavailable"
+            code: "UNAVAILABLE"
+
+tags:
+  - name: File storing service
+    description: File storage and task management operations
+  - name: File analysis service
+    description: Plagiarism analysis and reporting operations
+

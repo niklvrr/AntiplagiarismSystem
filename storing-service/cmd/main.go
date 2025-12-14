@@ -54,9 +54,9 @@ func main() {
 	}
 	defer analysisClient.Close()
 
-	pgrepo := pgdb.NewStoringRepository(db)
-	service := usecase.NewStoringService(pgrepo, fileStorage, cfg.Minio.Bucket, analysisClient)
-	handler := transport.NewStoringHandler(service)
+	pgrepo := pgdb.NewStoringRepository(db, appLogger)
+	service := usecase.NewStoringService(pgrepo, fileStorage, cfg.Minio.Bucket, analysisClient, appLogger)
+	handler := transport.NewStoringHandler(service, appLogger)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.App.GrpcPort))
 	if err != nil {

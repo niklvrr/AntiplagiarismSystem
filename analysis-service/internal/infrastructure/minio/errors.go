@@ -1,9 +1,9 @@
 package minio
 
 import (
+	"analysis-service/internal/errdefs"
 	"errors"
 	"fmt"
-	"github.com/containerd/errdefs"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -13,7 +13,6 @@ func handleMinioError(err error) error {
 		return nil
 	}
 
-	// Проверяем типы ошибок MinIO
 	var minioErr minio.ErrorResponse
 	if errors.As(err, &minioErr) {
 		switch minioErr.Code {
@@ -41,7 +40,7 @@ func handleMinioError(err error) error {
 		return fmt.Errorf("%w: %v", errdefs.ErrInvalidArgument, err)
 	}
 
-	return fmt.Errorf("%w: %v", errdefs.ErrInternal, err)
+	return fmt.Errorf("%w: %v", errdefs.ErrUnavailable, err)
 }
 
 func isNetworkError(err error) bool {

@@ -8,12 +8,13 @@ import (
 	"api-gateway/pkg/logger"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -26,19 +27,19 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	analysisClient, err := analysis.NewClient(ctx, cfg.AnalysisService.Endpoint)
+	analysisClient, err := analysis.NewClient(ctx, cfg.AnalysisService.Endpoint, appLogger)
 	if err != nil {
 		appLogger.Fatal("failed to connect to analysis service", zap.Error(err))
 	}
 	defer analysisClient.Close()
 
-	storingClient, err := storing.NewClient(ctx, cfg.StoringService.Endpoint)
+	storingClient, err := storing.NewClient(ctx, cfg.StoringService.Endpoint, appLogger)
 	if err != nil {
 		appLogger.Fatal("failed to connect to storing service", zap.Error(err))
 	}
 	defer storingClient.Close()
 
-	handler := transport.NewHandler(analysisClient, storingClient)
+	handler := transport.NewHandler(analysisClient, storingClient, appLogger)
 	router := transport.NewRouter(handler, appLogger)
 
 	server := &http.Server{

@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 40s
+
+  storing-db:
+    image: postgres:15-alpine
+    container_name: storing-db
+    environment:
+      POSTGRES_USER: ${STORING_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${STORING_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${STORING_DB_NAME:-storing_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - storing_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STORING_DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analysis-db:
+    image: postgres:15-alpine
+    container_name: analysis-db
+    environment:
+      POSTGRES_USER: ${ANALYSIS_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${ANALYSIS_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${ANALYSIS_DB_NAME:-analysis_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - analysis_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ANALYSIS_DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  storing-service:
+    build:
+      context: .
+      dockerfile: ./storing-service/Dockerfile
+    container_name: storing-service
+#    restart: unless-stopped
+    env_file:
+      - ./storing-service/.env
+    environment:
+      GRPC_PORT: ${STORING_GRPC_PORT:-50051}
+      DB_HOST: ${STORING_DB_HOST:-storing-db}
+      DB_PORT: ${STORING_DB_PORT:-5432}
+      DB_NAME: ${STORING_DB_NAME:-storing_db}
+      DB_USER: ${STORING_DB_USER:-postgres}
+      DB_PASSWORD: ${STORING_DB_PASSWORD:-postgres}
+      MINIO_ENDPOINT: ${STORING_MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${STORING_MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${STORING_MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${STORING_MINIO_BUCKET:-tasks}
+      LOG_LEVEL: ${STORING_LOG_LEVEL:-prod}
+      ANALYSIS_URL: ${STORING_ANALYSIS_URL:-analysis-service:50052}
+    ports:
+      - "50051:50051"
+    depends_on:
+      storing-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  analysis-service:
+    build:
+      context: .
+      dockerfile: ./analysis-service/Dockerfile
+    container_name: analysis-service
+#    restart: unless-stopped
+    env_file:
+      - ./analysis-service/.env
+    environment:
+      GRPC_PORT: ${ANALYSIS_GRPC_PORT:-50052}
+      DB_HOST: ${ANALYSIS_DB_HOST:-analysis-db}
+      DB_PORT: ${ANALYSIS_DB_PORT:-5432}
+      DB_NAME: ${ANALYSIS_DB_NAME:-analysis_db}
+      DB_USER: ${ANALYSIS_DB_USER:-postgres}
+      DB_PASSWORD: ${ANALYSIS_DB_PASSWORD:-postgres}
+      MINIO_ENDPOINT: ${ANALYSIS_MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${ANALYSIS_MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${ANALYSIS_MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${ANALYSIS_MINIO_BUCKET:-tasks}
+      LOG_LEVEL: ${ANALYSIS_LOG_LEVEL:-prod}
+    ports:
+      - "50052:50052"
+    depends_on:
+      analysis-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+#    restart: unless-stopped
+    env_file:
+      - ./api-gateway/.env
+    environment:
+      HTTP_PORT: ${GATEWAY_HTTP_PORT:-8080}
+      STORING_SERVICE_ENDPOINT: ${GATEWAY_STORING_ENDPOINT:-storing-service:50051}
+      ANALYSIS_SERVICE_ENDPOINT: ${GATEWAY_ANALYSIS_ENDPOINT:-analysis-service:50052}
+      LOG_LEVEL: ${GATEWAY_LOG_LEVEL:-prod}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - storing-service
+      - analysis-service
+
+volumes:
+  minio_data:
+  storing_db_data:
+  analysis_db_data:
+

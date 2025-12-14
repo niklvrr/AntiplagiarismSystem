@@ -8,6 +8,8 @@ service StoringService {
   rpc UploadTask(UploadTaskRequest) returns (UploadTaskResponse);
 
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+
+  rpc GetFileContent(GetFileContentRequest) returns (GetFileContentResponse);
 }
 
 // ==== UPLOAD TASK ====
@@ -34,4 +36,14 @@ message GetTaskResponse {
   string url = 3;
   string uploaded_by = 4;
   string uploaded_at = 5;
+}
+
+// ==== GET FILE CONTENT ====
+
+message GetFileContentRequest {
+  string file_id = 1;
+}
+
+message GetFileContentResponse {
+  bytes content = 1;
 }

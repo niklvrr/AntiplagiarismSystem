@@ -49,9 +49,9 @@ func main() {
 
 	comparator := usecase.NewTextComparator()
 
-	repo := pgdb.NewAnalysisRepository(db)
-	service := usecase.NewAnalysisService(repo, minioClient, comparator)
-	handler := transport.NewAnalysisHandler(service)
+	repo := pgdb.NewAnalysisRepository(db, appLogger)
+	service := usecase.NewAnalysisService(repo, minioClient, comparator, appLogger)
+	handler := transport.NewAnalysisHandler(service, appLogger)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.App.GrpcPort))
 	if err != nil {

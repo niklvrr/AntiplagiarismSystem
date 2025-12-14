@@ -55,7 +55,7 @@ func LoadConfig() (*Config, error) {
 			User:     getEnv("DB_USER", "postgres"),
 		},
 		Minio: MinioConfig{
-			Endpoint:  getEnv("MINIO_ENDPOINT", "http://localhost:9000"),
+			Endpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
 			AccessKey: getEnv("MINIO_ACCESS_KEY", "user"),
 			SecretKey: getEnv("MINIO_SECRET_KEY", "password"),
 			Bucket:    getEnv("MINIO_BUCKET", "tasks"),

@@ -2,9 +2,10 @@ package transport
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
 )
 
 type ErrorResponse struct {

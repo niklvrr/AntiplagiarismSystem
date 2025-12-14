@@ -3,6 +3,7 @@ package pgdb
 import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 	"storing-service/internal/domain"
 	"storing-service/internal/infrastucture/dto"
 )
@@ -20,16 +21,22 @@ WHERE id = $1`
 )
 
 type StoringRepository struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	logger *zap.Logger
 }
 
-func NewStoringRepository(db *pgxpool.Pool) *StoringRepository {
+func NewStoringRepository(db *pgxpool.Pool, logger *zap.Logger) *StoringRepository {
 	return &StoringRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }
 
 func (r *StoringRepository) CreateTask(ctx context.Context, dto *dto.CreateTaskDTO) (*domain.TaskMetadata, error) {
+	r.logger.Debug("executing create task query",
+		zap.String("task_id", dto.Id.String()),
+		zap.String("filename", dto.FileName))
+
 	err := r.db.QueryRow(ctx, createTaskQuery,
 		dto.Id,
 		dto.FileName,
@@ -37,8 +44,13 @@ func (r *StoringRepository) CreateTask(ctx context.Context, dto *dto.CreateTaskD
 		dto.CreatedAt).Scan(&dto.Id)
 
 	if err != nil {
+		r.logger.Error("create task query failed",
+			zap.String("task_id", dto.Id.String()),
+			zap.Error(err))
 		return nil, handleDBError(err)
 	}
+
+	r.logger.Debug("task created in database", zap.String("task_id", dto.Id.String()))
 
 	return &domain.TaskMetadata{
 		Id:         dto.Id,
@@ -49,6 +61,8 @@ func (r *StoringRepository) CreateTask(ctx context.Context, dto *dto.CreateTaskD
 }
 
 func (r *StoringRepository) GetTask(ctx context.Context, dto *dto.GetTaskDTO) (*domain.TaskMetadata, error) {
+	r.logger.Debug("executing get task query", zap.String("task_id", dto.Id.String()))
+
 	task := &domain.TaskMetadata{}
 	err := r.db.QueryRow(ctx, getTaskQuery, dto.Id).Scan(
 		&task.Filename,
@@ -58,8 +72,13 @@ func (r *StoringRepository) GetTask(ctx context.Context, dto *dto.GetTaskDTO) (*
 	task.Id = dto.Id
 
 	if err != nil {
+		r.logger.Error("get task query failed",
+			zap.String("task_id", dto.Id.String()),
+			zap.Error(err))
 		return nil, handleDBError(err)
 	}
+
+	r.logger.Debug("task retrieved from database", zap.String("task_id", dto.Id.String()))
 
 	return task, nil
 }
