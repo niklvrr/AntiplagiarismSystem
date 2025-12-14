@@ -174,7 +174,7 @@ type GetTaskResponse struct {
 	FileId        string                 `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
 	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
 	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	UploadedId    string                 `protobuf:"bytes,4,opt,name=uploaded_id,json=uploadedId,proto3" json:"uploaded_id,omitempty"`
+	UploadedBy    string                 `protobuf:"bytes,4,opt,name=uploaded_by,json=uploadedBy,proto3" json:"uploaded_by,omitempty"`
 	UploadedAt    string                 `protobuf:"bytes,5,opt,name=uploaded_at,json=uploadedAt,proto3" json:"uploaded_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -231,9 +231,9 @@ func (x *GetTaskResponse) GetUrl() string {
 	return ""
 }
 
-func (x *GetTaskResponse) GetUploadedId() string {
+func (x *GetTaskResponse) GetUploadedBy() string {
 	if x != nil {
-		return x.UploadedId
+		return x.UploadedBy
 	}
 	return ""
 }
@@ -265,8 +265,8 @@ const file_storing_service_proto_rawDesc = "" +
 	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1f\n" +
-	"\vuploaded_id\x18\x04 \x01(\tR\n" +
-	"uploadedId\x12\x1f\n" +
+	"\vuploaded_by\x18\x04 \x01(\tR\n" +
+	"uploadedBy\x12\x1f\n" +
 	"\vuploaded_at\x18\x05 \x01(\tR\n" +
 	"uploadedAt2\xa1\x01\n" +
 	"\x0eStoringService\x12K\n" +

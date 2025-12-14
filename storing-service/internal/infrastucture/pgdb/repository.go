@@ -51,10 +51,11 @@ func (r *StoringRepository) CreateTask(ctx context.Context, dto *dto.CreateTaskD
 func (r *StoringRepository) GetTask(ctx context.Context, dto *dto.GetTaskDTO) (*domain.TaskMetadata, error) {
 	task := &domain.TaskMetadata{}
 	err := r.db.QueryRow(ctx, getTaskQuery, dto.Id).Scan(
-		&task.Id,
 		&task.Filename,
 		&task.UploadedBy,
+		&task.CreatedAt,
 	)
+	task.Id = dto.Id
 
 	if err != nil {
 		return nil, handleDBError(err)

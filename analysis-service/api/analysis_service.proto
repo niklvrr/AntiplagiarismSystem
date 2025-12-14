@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package analysis.v1;
+
+option go_package = "pkg/api";
+
+service AnalysisService {
+  rpc AnalyseTask(AnalyzeTaskRequest) returns (AnalyseTaskResponse);
+
+  rpc GetReport(GetReportRequest) returns (GetReportResponse);
+}
+
+// ==== ANALYSE TASK ====
+
+message AnalyzeTaskRequest {
+  string task_id = 1;
+  string object_key = 2;
+}
+
+message AnalyseTaskResponse {
+  bool status = 1;
+}
+
+// ==== GET REPORT ====
+
+message GetReportRequest {
+  string task_id = 1;
+}
+
+message GetReportResponse {
+  string task_id = 1;
+  bool is_plagiarism = 4;
+  float plagiarism_percentage = 5;
+}

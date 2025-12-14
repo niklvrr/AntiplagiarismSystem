@@ -35,16 +35,11 @@ type LoggerConfig struct {
 	Level string
 }
 
-type AnalysisConfig struct {
-	URL string
-}
-
 type Config struct {
 	App      AppConfig
 	Database DatabaseConfig
 	Minio    MinioConfig
 	Logger   LoggerConfig
-	Analysis AnalysisConfig
 }
 
 func LoadConfig() (*Config, error) {
@@ -67,9 +62,6 @@ func LoadConfig() (*Config, error) {
 		},
 		Logger: LoggerConfig{
 			Level: getEnv("LOG_LEVEL", "prod"),
-		},
-		Analysis: AnalysisConfig{
-			URL: getEnv("ANALYSIS_URL", "localhost:9000"),
 		},
 	}
 

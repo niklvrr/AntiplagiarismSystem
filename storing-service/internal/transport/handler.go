@@ -57,7 +57,7 @@ func (h *StoringHandler) GetTask(ctx context.Context, request *pb.GetTaskRequest
 		FileId:     res.Id.String(),
 		Filename:   res.Filename,
 		Url:        res.Url,
-		UploadedId: res.UploadedBy.String(),
+		UploadedBy: res.UploadedBy.String(),
 		UploadedAt: res.CreatedAt.String(),
 	}, nil
 }

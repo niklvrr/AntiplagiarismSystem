@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"storing-service/internal/domain"
@@ -14,26 +13,28 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-var (
-	errInvalidInput = errors.New("invalid input")
-)
-
 type StoringRepository interface {
 	CreateTask(ctx context.Context, dto *dto.CreateTaskDTO) (*domain.TaskMetadata, error)
 	GetTask(ctx context.Context, dto *dto.GetTaskDTO) (*domain.TaskMetadata, error)
 }
 
-type StoringService struct {
-	repo   StoringRepository
-	minio  *minio.Client
-	bucket string
+type AnalysisClient interface {
+	AnalyseTask(ctx context.Context, taskId, objectKey string) (bool, error)
 }
 
-func NewStoringService(repo StoringRepository, minio *minio.Client, bucket string) *StoringService {
+type StoringService struct {
+	repo           StoringRepository
+	minio          *minio.Client
+	bucket         string
+	analysisClient AnalysisClient
+}
+
+func NewStoringService(repo StoringRepository, minio *minio.Client, bucket string, analysisClient AnalysisClient) *StoringService {
 	return &StoringService{
-		repo:   repo,
-		minio:  minio,
-		bucket: bucket,
+		repo:           repo,
+		minio:          minio,
+		bucket:         bucket,
+		analysisClient: analysisClient,
 	}
 }
 
@@ -62,6 +63,15 @@ func (s *StoringService) UploadTask(ctx context.Context, filename string, upload
 	uploadUrl, err := s.minio.PresignedPutObject(ctx, s.bucket, objectKey, time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate upload url: %w", errdefs.ErrUnavailable)
+	}
+
+	status, err := s.analysisClient.AnalyseTask(ctx, id.String(), objectKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if status == false {
+		return nil, fmt.Errorf("failed to analyse task status: %w", errdefs.ErrUnavailable)
 	}
 
 	return &domain.Task{

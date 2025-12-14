@@ -32,6 +32,6 @@ message GetTaskResponse {
   string file_id = 1;
   string filename = 2;
   string url = 3;
-  string uploaded_id = 4;
+  string uploaded_by = 4;
   string uploaded_at = 5;
 }
