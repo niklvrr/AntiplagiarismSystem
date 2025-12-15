@@ -18,7 +18,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, cfg *config.MinioConfig) (*Client, error) {
-	endpoint := strings.TrimPrefix(strings.TrimPrefix(cfg.Endpoint, "http://"), "https://")
+	endpoint := strings.TrimPrefix(strings.TrimPrefix(cfg.InternalEndpoint, "http://"), "https://")
 
 	var minioClient *minio.Client
 	var err error

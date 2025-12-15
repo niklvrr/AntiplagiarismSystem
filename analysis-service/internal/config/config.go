@@ -25,10 +25,10 @@ type DatabaseConfig struct {
 }
 
 type MinioConfig struct {
-	Endpoint  string
-	AccessKey string
-	SecretKey string
-	Bucket    string
+	InternalEndpoint string
+	AccessKey        string
+	SecretKey        string
+	Bucket           string
 }
 
 type LoggerConfig struct {
@@ -55,10 +55,10 @@ func LoadConfig() (*Config, error) {
 			User:     getEnv("DB_USER", "postgres"),
 		},
 		Minio: MinioConfig{
-			Endpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
-			AccessKey: getEnv("MINIO_ACCESS_KEY", "user"),
-			SecretKey: getEnv("MINIO_SECRET_KEY", "password"),
-			Bucket:    getEnv("MINIO_BUCKET", "tasks"),
+			InternalEndpoint: getEnv("MINIO_INTERNAL_ENDPOINT", "minio:9000"),
+			AccessKey:        getEnv("MINIO_ACCESS_KEY", "user"),
+			SecretKey:        getEnv("MINIO_SECRET_KEY", "password"),
+			Bucket:           getEnv("MINIO_BUCKET", "tasks"),
 		},
 		Logger: LoggerConfig{
 			Level: getEnv("LOG_LEVEL", "prod"),
