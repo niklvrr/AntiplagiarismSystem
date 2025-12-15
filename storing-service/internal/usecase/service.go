@@ -8,6 +8,7 @@ import (
 	"storing-service/internal/domain"
 	"storing-service/internal/errdefs"
 	"storing-service/internal/infrastucture/dto"
+	minio1 "storing-service/internal/infrastucture/minio"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,13 +27,13 @@ type AnalysisClient interface {
 
 type StoringService struct {
 	repo           StoringRepository
-	minio          *minio.Client
+	minio          *minio1.Client
 	bucket         string
 	analysisClient AnalysisClient
 	logger         *zap.Logger
 }
 
-func NewStoringService(repo StoringRepository, minio *minio.Client, bucket string, analysisClient AnalysisClient, logger *zap.Logger) *StoringService {
+func NewStoringService(repo StoringRepository, minio *minio1.Client, bucket string, analysisClient AnalysisClient, logger *zap.Logger) *StoringService {
 	return &StoringService{
 		repo:           repo,
 		minio:          minio,
@@ -82,7 +83,7 @@ func (s *StoringService) UploadTask(ctx context.Context, filename string, upload
 		zap.String("object_key", objectKey),
 		zap.String("bucket", s.bucket))
 
-	uploadUrl, err := s.minio.PresignedPutObject(ctx, s.bucket, objectKey, time.Hour)
+	uploadUrl, err := s.minio.PresignedPutObject(ctx, objectKey, time.Hour)
 	if err != nil {
 		s.logger.Error("failed to generate upload URL",
 			zap.String("object_key", objectKey),
@@ -131,7 +132,7 @@ func (s *StoringService) GetTask(ctx context.Context, fileId uuid.UUID) (*domain
 		zap.String("object_key", objectKey),
 		zap.String("bucket", s.bucket))
 
-	downloadUrl, err := s.minio.PresignedGetObject(ctx, s.bucket, objectKey, time.Hour, nil)
+	downloadUrl, err := s.minio.PresignedGetObject(ctx, objectKey, time.Hour, nil)
 	if err != nil {
 		s.logger.Error("failed to generate download URL",
 			zap.String("object_key", objectKey),
@@ -173,7 +174,7 @@ func (s *StoringService) GetFileContent(ctx context.Context, fileId uuid.UUID) (
 		zap.String("object_key", objectKey),
 		zap.String("bucket", s.bucket))
 
-	obj, err := s.minio.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	obj, err := s.minio.GetObject(ctx, objectKey, minio.GetObjectOptions{})
 	if err != nil {
 		s.logger.Error("failed to get file from MinIO",
 			zap.String("object_key", objectKey),
@@ -259,7 +260,7 @@ func (s *StoringService) startAnalysisAsync(ctx context.Context, taskId, objectK
 }
 
 func (s *StoringService) checkFileExists(ctx context.Context, objectKey string) (bool, error) {
-	_, err := s.minio.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
+	_, err := s.minio.StatObject(ctx, objectKey, minio.StatObjectOptions{})
 	if err != nil {
 		errResp := minio.ToErrorResponse(err)
 		if errResp.Code == "NoSuchKey" || errResp.Code == "NotFound" {
