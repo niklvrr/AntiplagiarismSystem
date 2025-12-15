@@ -172,18 +172,3 @@ go run cmd/main.go
 
 API Gateway будет доступен по адресу http://localhost:8080
 
-## Graceful Shutdown
-
-Сервис поддерживает graceful shutdown:
-
-1. При получении SIGTERM или SIGINT сервер прекращает прием новых запросов
-2. Ожидает завершения текущих запросов (таймаут 30 секунд)
-3. Закрывает соединения с микросервисами
-4. Завершает работу
-
-## Зависимости
-
-- `github.com/go-chi/chi/v5` - HTTP роутер
-- `go.uber.org/zap` - структурированное логирование
-- `google.golang.org/grpc` - gRPC клиенты
-
