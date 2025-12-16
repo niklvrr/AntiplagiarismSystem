@@ -36,11 +36,12 @@ func (c *Client) GenerateWordCloud(ctx context.Context, fileContent []byte) (str
 		zap.Int("unique_words", len(wordFreq)),
 		zap.Int("total_words", len(words)))
 
+	text := strings.Join(words, " ")
+	
 	config := map[string]interface{}{
 		"type":    "wordCloud",
 		"data":    wordFreq,
 		"options": map[string]interface{}{
-			"text":    strings.Join(words, " "),
 			"width":   800,
 			"height":  600,
 			"colors":  []string{"#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"},
@@ -55,7 +56,7 @@ func (c *Client) GenerateWordCloud(ctx context.Context, fileContent []byte) (str
 		return "", fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	chartURL := fmt.Sprintf("%s?c=%s", c.baseURL, url.QueryEscape(string(configJSON)))
+	chartURL := fmt.Sprintf("%s?text=%s&c=%s", c.baseURL, url.QueryEscape(text), url.QueryEscape(string(configJSON)))
 
 	c.logger.Info("word cloud generated",
 		zap.String("url", chartURL))
